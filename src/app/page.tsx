@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 
 interface WorkoutHistory {
@@ -37,13 +37,7 @@ export default function Home() {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (name.trim()) {
-      fetchWorkoutHistory();
-    }
-  }, [name]);
-
-  const fetchWorkoutHistory = async () => {
+  const fetchWorkoutHistory = useCallback(async () => {
     try {
       const response = await fetch(`/api/workouts?name=${encodeURIComponent(name)}`);
       const data = await response.json();
@@ -53,7 +47,13 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching workout history:', error);
     }
-  };
+  }, [name]);
+
+  useEffect(() => {
+    if (name.trim()) {
+      fetchWorkoutHistory();
+    }
+  }, [name, fetchWorkoutHistory]);
 
   const deleteWorkout = async (id: string) => {
     try {
@@ -160,7 +160,7 @@ export default function Home() {
         
         <div className="mb-8">
           <label htmlFor="name" className="block text-xl font-medium mb-2 text-pink-600">
-            👋 What's Your Name?
+            👋 What&apos;s Your Name?
           </label>
           <input
             type="text"
@@ -176,7 +176,7 @@ export default function Home() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="transform hover:scale-102 transition-transform duration-200">
             <label htmlFor="workout" className="block text-xl font-medium mb-2 text-pink-600">
-              💖 What's Your Workout?
+              💖 What&apos;s Your Workout?
             </label>
             <input
               type="text"

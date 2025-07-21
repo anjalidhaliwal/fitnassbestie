@@ -1,14 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable static optimization where possible
-  output: 'standalone',
-  
-  // Optimize images
-  images: {
-    formats: ['image/avif', 'image/webp'],
-    remotePatterns: [],
-  },
-
   // Production optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -16,9 +7,6 @@ const nextConfig = {
 
   // Enable React strict mode
   reactStrictMode: true,
-
-  // Optimize builds
-  swcMinify: true,
 
   // Configure headers
   headers: async () => {

@@ -2,19 +2,55 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+interface Workout {
+  id: string;
+  name: string;
+  workout: string;
+  duration: string;
+  calories: number;
+  timestamp: string;
+}
+
+interface WorkoutData {
+  workouts: Workout[];
+}
+
+interface WorkoutStats {
+  count: number;
+  totalCalories: number;
+  averageCalories: number;
+}
+
+interface GroupedWorkouts {
+  [key: string]: Workout[];
+}
+
+interface WorkoutsByType {
+  [key: string]: WorkoutStats;
+}
+
+interface WorkoutResponse {
+  workouts: Workout[];
+  groupedWorkouts: GroupedWorkouts;
+  stats: {
+    totalCalories: number;
+    averageCalories: number;
+    totalWorkouts: number;
+    workoutsByType: WorkoutsByType;
+  };
+}
+
 const dataFilePath = path.join(process.cwd(), 'src/data/workouts.json');
 
-// Helper function to read workouts
-function readWorkouts() {
+function readWorkouts(): WorkoutData {
   if (!fs.existsSync(dataFilePath)) {
     fs.writeFileSync(dataFilePath, JSON.stringify({ workouts: [] }));
   }
   const data = fs.readFileSync(dataFilePath, 'utf-8');
-  return JSON.parse(data);
+  return JSON.parse(data) as WorkoutData;
 }
 
-// Helper function to write workouts
-function writeWorkouts(workouts: any) {
+function writeWorkouts(workouts: WorkoutData): void {
   fs.writeFileSync(dataFilePath, JSON.stringify(workouts, null, 2));
 }
 
@@ -25,10 +61,9 @@ export async function GET(request: Request) {
     
     const data = readWorkouts();
     if (name) {
-      const userWorkouts = data.workouts.filter((w: any) => w.name.toLowerCase() === name.toLowerCase());
+      const userWorkouts = data.workouts.filter((w) => w.name.toLowerCase() === name.toLowerCase());
       
-      // Group workouts by type
-      const groupedWorkouts = userWorkouts.reduce((acc: any, workout: any) => {
+      const groupedWorkouts = userWorkouts.reduce<GroupedWorkouts>((acc, workout) => {
         const type = workout.workout.toLowerCase();
         if (!acc[type]) {
           acc[type] = [];
@@ -37,35 +72,34 @@ export async function GET(request: Request) {
         return acc;
       }, {});
 
-      // Calculate statistics
       const stats = {
-        totalCalories: userWorkouts.reduce((sum: number, w: any) => sum + w.calories, 0),
+        totalCalories: userWorkouts.reduce((sum, w) => sum + w.calories, 0),
         averageCalories: Math.round(
-          userWorkouts.reduce((sum: number, w: any) => sum + w.calories, 0) / 
+          userWorkouts.reduce((sum, w) => sum + w.calories, 0) / 
           (userWorkouts.length || 1)
         ),
         totalWorkouts: userWorkouts.length,
         workoutsByType: Object.fromEntries(
-          Object.entries(groupedWorkouts).map(([type, workouts]: [string, any]) => [
+          Object.entries(groupedWorkouts).map(([type, workouts]) => [
             type,
             {
               count: workouts.length,
-              totalCalories: workouts.reduce((sum: number, w: any) => sum + w.calories, 0),
+              totalCalories: workouts.reduce((sum, w) => sum + w.calories, 0),
               averageCalories: Math.round(
-                workouts.reduce((sum: number, w: any) => sum + w.calories, 0) / workouts.length
+                workouts.reduce((sum, w) => sum + w.calories, 0) / workouts.length
               )
             }
           ])
-        )
+        ) as WorkoutsByType
       };
 
-      return NextResponse.json({ 
+      return NextResponse.json<WorkoutResponse>({ 
         workouts: userWorkouts,
         groupedWorkouts,
         stats
       });
     }
-    return NextResponse.json(data);
+    return NextResponse.json<WorkoutData>(data);
   } catch (error) {
     console.error('Error reading workouts:', error);
     return NextResponse.json({ error: 'Failed to read workouts' }, { status: 500 });
@@ -74,13 +108,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const workout = await request.json();
+    const workout = await request.json() as Omit<Workout, 'id' | 'timestamp'>;
     const data = readWorkouts();
     
-    // Add timestamp and unique ID to the workout
-    const workoutWithMetadata = {
+    const workoutWithMetadata: Workout = {
       ...workout,
-      id: Date.now().toString(), // Simple unique ID
+      id: Date.now().toString(),
       timestamp: new Date().toISOString()
     };
     
@@ -104,7 +137,7 @@ export async function DELETE(request: Request) {
     }
 
     const data = readWorkouts();
-    data.workouts = data.workouts.filter((w: any) => w.id !== workoutId);
+    data.workouts = data.workouts.filter((w) => w.id !== workoutId);
     writeWorkouts(data);
     
     return NextResponse.json({ success: true });

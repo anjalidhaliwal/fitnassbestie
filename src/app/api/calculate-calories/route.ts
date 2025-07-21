@@ -1,6 +1,15 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 
+interface WorkoutRequest {
+  workout: string;
+  duration: string;
+}
+
+interface CalorieResponse {
+  calories: number;
+}
+
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -27,13 +36,13 @@ function estimateCalories(workout: string, duration: number): number {
 
 export async function POST(request: Request) {
   try {
-    const { workout, duration } = await request.json();
+    const { workout, duration } = await request.json() as WorkoutRequest;
     const durationNum = parseInt(duration);
 
     if (!process.env.OPENAI_API_KEY) {
       // If no API key, use fallback calculation
       const calories = estimateCalories(workout, durationNum);
-      return NextResponse.json({ calories });
+      return NextResponse.json<CalorieResponse>({ calories });
     }
 
     try {
@@ -53,12 +62,14 @@ export async function POST(request: Request) {
       });
 
       const calories = parseInt(completion.choices[0].message.content || "0");
-      return NextResponse.json({ calories: calories || estimateCalories(workout, durationNum) });
+      return NextResponse.json<CalorieResponse>({ 
+        calories: calories || estimateCalories(workout, durationNum) 
+      });
     } catch (openaiError) {
       // If OpenAI fails, use fallback calculation
       console.error('OpenAI Error:', openaiError);
       const calories = estimateCalories(workout, durationNum);
-      return NextResponse.json({ calories });
+      return NextResponse.json<CalorieResponse>({ calories });
     }
   } catch (error) {
     console.error('Error:', error);
