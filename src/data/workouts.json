@@ -1,0 +1,32 @@
+{
+  "workouts": [
+    {
+      "name": "anjali",
+      "workout": "pilates",
+      "duration": "30",
+      "calories": 180,
+      "timestamp": "2025-07-21T02:21:35.699Z"
+    },
+    {
+      "name": "anjali",
+      "workout": "pilates",
+      "duration": "45",
+      "calories": 270,
+      "timestamp": "2025-07-21T02:22:41.642Z"
+    },
+    {
+      "name": "anjali",
+      "workout": "running",
+      "duration": "20",
+      "calories": 230,
+      "timestamp": "2025-07-21T02:22:45.708Z"
+    },
+    {
+      "name": "anjali",
+      "workout": "running",
+      "duration": "20",
+      "calories": 230,
+      "timestamp": "2025-07-21T02:22:49.779Z"
+    }
+  ]
+}
